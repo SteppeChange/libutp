@@ -5,3 +5,5 @@ ucat
 ucat-static
 tags
 *~
+cmake-*
+.idea
