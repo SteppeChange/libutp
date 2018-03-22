@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(ucat)
+project(libutp)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -8,8 +8,7 @@ add_definitions(-D_DEBUG -DUTP_DEBUG_LOGGING -DPOSIX)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-add_executable(ucat
-        ucat.c
+set(SOURCE_FILES
         utp.h
         utp_api.cpp
         utp_callbacks.cpp
@@ -24,3 +23,13 @@ add_executable(ucat
         utp_types.h
         utp_utils.cpp
         utp_utils.h)
+
+set(SOURCE_FILES_UCAT
+        ${SOURCE_FILES}
+        ucat.c)
+
+add_executable(libutp_test ${SOURCE_FILES_UCAT})
+add_library(libutp ${SOURCE_FILES})
+
+
+
