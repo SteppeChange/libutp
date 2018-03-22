@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(libutp)
+project(utp)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -28,8 +28,8 @@ set(SOURCE_FILES_UCAT
         ${SOURCE_FILES}
         ucat.c)
 
-add_executable(libutp_test ${SOURCE_FILES_UCAT})
-add_library(libutp ${SOURCE_FILES})
+add_executable(ucat ${SOURCE_FILES_UCAT})
+add_library(utp ${SOURCE_FILES})
 
 
 
