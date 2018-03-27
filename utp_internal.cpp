@@ -2209,7 +2209,7 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 			conn->cur_window_packets--;
 
 			#if UTP_DEBUG_LOGGING
-			conn->log(UTP_LOG_DEBUG, "decementing cur_window_packets:%u", conn->cur_window_packets);
+			conn->log(UTP_LOG_DEBUG, "decrementing cur_window_packets:%u", conn->cur_window_packets);
 			#endif
 
 		}
@@ -2229,7 +2229,7 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 			conn->cur_window_packets--;
 
 			#if UTP_DEBUG_LOGGING
-			conn->log(UTP_LOG_DEBUG, "decementing cur_window_packets:%u", conn->cur_window_packets);
+			conn->log(UTP_LOG_DEBUG, "decrementing cur_window_packets:%u", conn->cur_window_packets);
 			#endif
 
 		}
