@@ -560,12 +560,12 @@ struct UTPSocket {
 		}
 
 		va_start(va, fmt);
-		vsnprintf(buf, 4096, fmt, va);
+		size_t len = vsnprintf(buf, 4096, fmt, va);
 		va_end(va);
-		buf[4095] = '\0';
+		buf[len] = '\0';
 
-		snprintf(buf2, 4096, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
-		buf2[4095] = '\0';
+		len = snprintf(buf2, 4096, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
+		buf2[len] = '\0';
 
 		ctx->log_unchecked(this, buf2);
 	}
@@ -3415,8 +3415,8 @@ void struct_utp_context::log_unchecked(utp_socket *socket, char const *fmt, ...)
 	char buf[4096];
 
 	va_start(va, fmt);
-	vsnprintf(buf, 4096, fmt, va);
-	buf[4095] = '\0';
+	size_t len = vsnprintf(buf, 4096, fmt, va);
+	buf[len] = '\0';
 	va_end(va);
 
 	utp_call_log(this, socket, (const byte *)buf);
