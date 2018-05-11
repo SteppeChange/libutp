@@ -567,7 +567,9 @@ struct UTPSocket {
 		len = snprintf(buf2, 4096, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
 		buf2[len] = '\0';
 
-		ctx->log_unchecked(this, buf2);
+		//ctx->log_unchecked(this, buf2);
+        ctx->log(level, NULL, "%s", buf2);
+
 	}
 
 	void schedule_ack();
@@ -746,15 +748,14 @@ void UTPSocket::send_data(byte* b, size_t length, bandwidth_type_t type, uint32 
 		}
 		utp_call_on_overhead_statistics(ctx, this, true, n, type);
 	}
-/*
-  crash on ipv6
-     int flags2 = b1->type();
+
+    int flags2 = b1->type();
      uint16 seq_nr = b1->seq_nr;
      uint16 ack_nr = b1->ack_nr;
      log(UTP_LOG_DEBUG, "send %s len:%u id:%u timestamp:" I64u " reply_micro:%u flags:%s seq_nr:%u ack_nr:%u",
      addrfmt(addr, addrbuf), (uint)length, conn_id_send, time, reply_micro, flagnames[flags2],
      seq_nr, ack_nr);
-*/
+
     log(UTP_LOG_DEBUG, "send len:%u id:%u", (uint)length, conn_id_send);
     send_to_addr(ctx, b, length, addr, flags);
 	removeSocketFromAckList(this);
@@ -3407,21 +3408,14 @@ void struct_utp_context::log(int level, utp_socket *socket, char const *fmt, ...
 
 	va_list va;
 	va_start(va, fmt);
-	log_unchecked(socket, fmt, va);
-	va_end(va);
-}
 
-void struct_utp_context::log_unchecked(utp_socket *socket, char const *fmt, ...)
-{
-	va_list va;
-	char buf[4096];
-
-	va_start(va, fmt);
-	size_t len = vsnprintf(buf, 4096, fmt, va);
-	buf[len] = '\0';
-	va_end(va);
-
-	utp_call_log(this, socket, (const byte *)buf);
+    char buf[4096];
+    
+    size_t len = vsnprintf(buf, 4096, fmt, va);
+    buf[len] = '\0';
+    va_end(va);
+    
+    utp_call_log(this, socket, (const byte *)buf);
 }
 
 inline bool struct_utp_context::would_log(int level)
