@@ -127,12 +127,14 @@ cstr PackedSockAddr::fmt(str s, size_t len) const
 		INET_NTOP(family, (uint32*)&_sin4, s, len);
 		i = s;
 		while (*++i) {}
-	} else {
+	} else if (family == AF_INET6) {
 		i = s;
 		*i++ = '[';
 		INET_NTOP(family, (in6_addr*)&_in._in6addr, i, len-1);
 		while (*++i) {}
 		*i++ = ']';
+	} else {
+		return s;
 	}
 	snprintf(i, len - (i-s), ":%u", _port);
 	return s;
