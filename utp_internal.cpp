@@ -551,25 +551,24 @@ struct UTPSocket {
 
 	void log(int level, char const *fmt, ...)
 	{
-		va_list va;
-		char buf[4096], buf2[4096];
-
 		// don't bother with vsnprintf() etc calls if we're not going to log.
 		if (!ctx->would_log(level)) {
 			return;
 		}
 
+		va_list va;
 		va_start(va, fmt);
-		size_t len = vsnprintf(buf, 4096, fmt, va);
-		va_end(va);
-		buf[len] = '\0';
 
-		len = snprintf(buf2, 4096, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
+		char buf[4096], buf2[4096];
+
+		size_t len = vsnprintf(buf, 4095, fmt, va);
+		buf[len] = '\0';
+		va_end(va);
+
+		len = snprintf(buf2, 4095, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
 		buf2[len] = '\0';
 
-		//ctx->log_unchecked(this, buf2);
         ctx->log(level, NULL, "%s", buf2);
-
 	}
 
 	void schedule_ack();
@@ -3411,7 +3410,7 @@ void struct_utp_context::log(int level, utp_socket *socket, char const *fmt, ...
 
     char buf[4096];
     
-    size_t len = vsnprintf(buf, 4096, fmt, va);
+    size_t len = vsnprintf(buf, 4095, fmt, va);
     buf[len] = '\0';
     va_end(va);
     
