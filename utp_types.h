@@ -76,7 +76,7 @@
 #ifdef WIN32
 	#define I64u "%I64u"
 #else
-	#define I64u "%Lu"
+	#define I64u "%llu"
 #endif
 
 // standard types
