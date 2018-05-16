@@ -559,16 +559,24 @@ struct UTPSocket {
 		va_list va;
 		va_start(va, fmt);
 
-		char buf[4096], buf2[4096];
+		char buf[2048], buf2[4096];
+		const int bufsize = sizeof(buf)/sizeof(buf[0]);
+		const int bufsize2 = sizeof(buf2)/sizeof(buf2[0]);
 
-		size_t len = vsnprintf(buf, 4095, fmt, va);
-		buf[len] = '\0';
+		int len = vsnprintf(buf, bufsize, fmt, va);
+
 		va_end(va);
 
-		len = snprintf(buf2, 4095, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
+		if (len < 0 || len > bufsize)
+			len = snprintf(buf, bufsize, "<formatting error or buffer exceeded>");
+		buf[len] = '\0';
+
+		len = snprintf(buf2, bufsize2, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
+		if (len < 0 || len > bufsize2)
+			len = snprintf(buf2, bufsize2, "<formatting error or buffer exceeded>");
 		buf2[len] = '\0';
 
-        ctx->log(level, NULL, "%s", buf2);
+		ctx->log(level, NULL, buf2);
 	}
 
 	void schedule_ack();
@@ -748,14 +756,16 @@ void UTPSocket::send_data(byte* b, size_t length, bandwidth_type_t type, uint32 
 		utp_call_on_overhead_statistics(ctx, this, true, n, type);
 	}
 
+#if UTP_DEBUG_LOGGING
+	assert(sizeof(flagnames)/sizeof(flagnames[0]) == ST_NUM_STATES);
     int flags2 = b1->type();
-     uint16 seq_nr = b1->seq_nr;
-     uint16 ack_nr = b1->ack_nr;
-     log(UTP_LOG_DEBUG, "send %s len:%u id:%u reply_micro:%u flags:%s seq_nr:%u ack_nr:%u",
-     addrfmt(addr, addrbuf), (uint)length, conn_id_send, reply_micro, flagnames[flags2],
-     seq_nr, ack_nr);
+	uint16 seq_nr = b1->seq_nr;
+    uint16 ack_nr = b1->ack_nr;
+	log(UTP_LOG_DEBUG, "Send %s. reply_micro:%u seq_nr:%u ack_nr:%u",
+		flagnames[flags2], reply_micro, seq_nr, ack_nr);
+#endif
 
-    log(UTP_LOG_DEBUG, "send len:%u id:%u", (uint)length, conn_id_send);
+	log(UTP_LOG_DEBUG, "send %s len:%u id:%u", addrfmt(addr, addrbuf), (uint)length, conn_id_send);
     send_to_addr(ctx, b, length, addr, flags);
 	removeSocketFromAckList(this);
 }
@@ -1780,13 +1790,12 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 	uint16 pk_ack_nr = pf1->ack_nr;
 	uint8 pk_flags   = pf1->type();
 
-	if (pk_flags >= ST_NUM_STATES) return 0;
-
-	#if UTP_DEBUG_LOGGING
-	conn->log(UTP_LOG_DEBUG, "Got %s. seq_nr:%u ack_nr:%u state:%s timestamp:" I64u " reply_micro:%u"
-		, flagnames[pk_flags], pk_seq_nr, pk_ack_nr, statenames[conn->state]
-		, uint64(pf1->tv_usec), (uint32)(pf1->reply_micro));
-	#endif
+#if UTP_DEBUG_LOGGING
+    assert(sizeof(flagnames)/sizeof(flagnames[0]) == ST_NUM_STATES);
+	assert(sizeof(statenames)/sizeof(statenames[0]) == CS_DESTROY+1);
+	conn->log(UTP_LOG_DEBUG, "Recv %s. seq_nr:%u ack_nr:%u state:%s reply_micro:%u"
+		, flagnames[pk_flags], pk_seq_nr, pk_ack_nr, statenames[conn->state], (uint32)(pf1->reply_micro));
+#endif
 
 	// mark receipt time
 	uint64 time = utp_call_get_microseconds(conn->ctx, conn);
