@@ -751,8 +751,8 @@ void UTPSocket::send_data(byte* b, size_t length, bandwidth_type_t type, uint32 
     int flags2 = b1->type();
      uint16 seq_nr = b1->seq_nr;
      uint16 ack_nr = b1->ack_nr;
-     log(UTP_LOG_DEBUG, "send %s len:%u id:%u timestamp:" I64u " reply_micro:%u flags:%s seq_nr:%u ack_nr:%u",
-     addrfmt(addr, addrbuf), (uint)length, conn_id_send, time, reply_micro, flagnames[flags2],
+     log(UTP_LOG_DEBUG, "send %s len:%u id:%u reply_micro:%u flags:%s seq_nr:%u ack_nr:%u",
+     addrfmt(addr, addrbuf), (uint)length, conn_id_send, reply_micro, flagnames[flags2],
      seq_nr, ack_nr);
 
     log(UTP_LOG_DEBUG, "send len:%u id:%u", (uint)length, conn_id_send);
