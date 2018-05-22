@@ -2786,12 +2786,9 @@ int utp_connect(utp_socket *conn, const struct sockaddr *to, socklen_t tolen)
 	pkt->length = header_size;
 	pkt->payload = 0;
 
-	/*
 	#if UTP_DEBUG_LOGGING
-	conn->log(UTP_LOG_DEBUG, "Sending connect %s [%u].",
-			addrfmt(conn->addr, addrbuf), conn_seed);
+	conn->log(UTP_LOG_DEBUG, "Sending connect %s", addrfmt(conn->addr, addrbuf));
 	#endif
-	*/
 
 	// Remember the message in the outgoing queue.
 	conn->outbuf.ensure_size(conn->seq_nr, conn->cur_window_packets);
