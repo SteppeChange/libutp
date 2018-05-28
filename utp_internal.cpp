@@ -3350,15 +3350,15 @@ void utp_close(UTPSocket *conn)
 	assert(conn);
 	if (!conn) return;
 
-	assert(conn->state != CS_UNINITIALIZED
-		&& conn->state != CS_DESTROY_DELAY
-		&& conn->state != CS_FIN_SENT
-		&& conn->state != CS_DESTROY);
-
 	#if UTP_DEBUG_LOGGING
 	conn->log(UTP_LOG_DEBUG, "UTP_Close in state:%s", statenames[conn->state]);
 	#endif
 
+    assert(conn->state != CS_UNINITIALIZED
+           && conn->state != CS_DESTROY_DELAY
+           && conn->state != CS_FIN_SENT
+           && conn->state != CS_DESTROY);
+    
 	switch(conn->state) {
 	case CS_CONNECTED:
 	case CS_CONNECTED_FULL:
