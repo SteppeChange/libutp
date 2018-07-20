@@ -551,13 +551,12 @@ struct UTPSocket {
 
 	void log(int level, char const *fmt, ...)
 	{
+        // don't bother with vsnprintf() etc calls if we're not going to log.
+        if (!ctx->would_log(level)) {
+            return;
+        }
 		va_list va;
 		char buf[4096], buf2[4096];
-
-		// don't bother with vsnprintf() etc calls if we're not going to log.
-		if (!ctx->would_log(level)) {
-			return;
-		}
 
 		va_start(va, fmt);
 		size_t len = vsnprintf(buf, 4096, fmt, va);
@@ -3426,7 +3425,7 @@ inline bool struct_utp_context::would_log(int level)
 	if (level == UTP_LOG_NORMAL) return log_normal;
 	if (level == UTP_LOG_MTU) return log_mtu;
 	if (level == UTP_LOG_DEBUG) return log_debug;
-	return true;
+	return false;
 }
 
 utp_socket_stats* utp_get_stats(utp_socket *socket)
