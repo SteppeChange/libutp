@@ -4,7 +4,7 @@ project(utp)
 set(CMAKE_CXX_STANDARD 11)
 
 add_compile_options(-Wall -g -fPIC -fno-exceptions -fno-rtti -fpermissive -Wno-sign-compare)
-add_definitions(-D_DEBUG -DUTP_DEBUG_LOGGING -DPOSIX)
+add_definitions(-DPOSIX)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
