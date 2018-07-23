@@ -750,14 +750,14 @@ void UTPSocket::send_data(byte* b, size_t length, bandwidth_type_t type, uint32 
 	}
 /*
   crash on ipv6
-     int flags2 = b1->type();
-     uint16 seq_nr = b1->seq_nr;
-     uint16 ack_nr = b1->ack_nr;
-     log(UTP_LOG_DEBUG, "send %s len:%u id:%u timestamp:" I64u " reply_micro:%u flags:%s seq_nr:%u ack_nr:%u",
-     addrfmt(addr, addrbuf), (uint)length, conn_id_send, time, reply_micro, flagnames[flags2],
-     seq_nr, ack_nr);
+	#if UTP_DEBUG_LOGGING
+    int flags2 = b1->type();
+    uint16 seq_nr = b1->seq_nr;
+    uint16 ack_nr = b1->ack_nr;
+    log(UTP_LOG_DEBUG, "send %s len:%u id:%u timestamp:" I64u " reply_micro:%u flags:%s seq_nr:%u ack_nr:%u",
+    	addrfmt(addr, addrbuf), (uint)length, conn_id_send, time, reply_micro, flagnames[flags2], seq_nr, ack_nr);
+    #endif
 */
-    log(UTP_LOG_DEBUG, "send len:%u id:%u", (uint)length, conn_id_send);
     send_to_addr(ctx, b, length, addr, flags);
 	removeSocketFromAckList(this);
 }
@@ -813,7 +813,7 @@ void UTPSocket::send_ack(bool synack)
 		len += 4 + 2;
 
 		#if UTP_DEBUG_LOGGING
-		log(UTP_LOG_DEBUG, "Sending EACK %u [%u] bits:[%032b]", ack_nr, conn_id_send, m);
+		log(UTP_LOG_DEBUG, "Sending EACK %u [%u] bits:[0x%x]", ack_nr, conn_id_send, m);
 		#endif
 	} else {
 		#if UTP_DEBUG_LOGGING
@@ -1554,7 +1554,6 @@ void UTPSocket::selective_ack(uint base, const byte *mask, byte len)
 			#endif
 
 		} else {
-
 			#if UTP_DEBUG_LOGGING
 			log(UTP_LOG_DEBUG, "not resending %u count:%d dup_ack:%u fast_resend_seq_nr:%u",
 				v, count, duplicate_ack, fast_resend_seq_nr);

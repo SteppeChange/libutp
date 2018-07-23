@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 add_compile_options(-Wall -g -fPIC -fno-exceptions -fno-rtti -fpermissive -Wno-sign-compare)
 add_definitions(-DPOSIX)
-add_definitions(-D_DEBUG -DUTP_DEBUG_LOGGING)
+#add_definitions(-D_DEBUG -DUTP_DEBUG_LOGGING)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
