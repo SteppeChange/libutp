@@ -561,7 +561,8 @@ struct UTPSocket {
         }
 
 		static char buf[4096];
-		size_t len = snprintf(buf, 4096, "%p %s %06u ", this, addrfmt(addr, addrbuf), conn_id_recv);
+		size_t len = 0;
+		//len = snprintf(buf, 4096, "%p %s %06u ", this, addrfmt(addr, addrbuf), conn_id_recv);
 
 		va_list va;
 		va_start(va, fmt);
