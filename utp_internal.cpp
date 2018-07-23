@@ -570,7 +570,7 @@ struct UTPSocket {
 		va_end(va);
 
 		buf[len] = '\0';
-		ctx->log_unchecked(this, buf, len);
+		ctx->log_unchecked(this, buf, len, level);
 	}
 
 	void schedule_ack();
@@ -1714,6 +1714,7 @@ void UTPSocket::apply_ccontrol(size_t bytes_acked, uint32 actual_delay, int64 mi
 	max_window = clamp<size_t>(max_window, MIN_WINDOW_SIZE, opt_sndbuf);
 
 	// used in parse_log.py
+	#ifdef UTP_DEBUG_LOGGING
 	log(UTP_LOG_NORMAL, "actual_delay:%u our_delay:%d their_delay:%u off_target:%d max_window:%u "
 			"delay_base:%u delay_sum:%d target_delay:%d acked_bytes:%u cur_window:%u "
 			"scaled_gain:%f rtt:%u rate:%u wnduser:%u rto:%u timeout:%d get_microseconds:" I64u " "
@@ -1732,6 +1733,7 @@ void UTPSocket::apply_ccontrol(size_t bytes_acked, uint32 actual_delay, int64 mi
 			average_delay, clock_drift, clock_drift_raw, penalty / 1000,
 			current_delay_sum, current_delay_samples, average_delay_base,
 			uint64(last_maxed_out_window), int(opt_sndbuf), uint64(ctx->current_ms));
+    #endif
 }
 
 static void utp_register_recv_packet(UTPSocket *conn, size_t len)
@@ -2753,11 +2755,13 @@ int utp_connect(utp_socket *conn, const struct sockaddr *to, socklen_t tolen)
 	// Create and send a connect message
 
 	// used in parse_log.py
+	#ifdef UTP_DEBUG_LOGGING
 	conn->log(UTP_LOG_NORMAL, "UTP_Connect conn_seed:%u packet_size:%u (B) "
 			"target_delay:%u (ms) delay_history:%u "
 			"delay_base_history:%u (minutes)",
 			conn->conn_seed, PACKET_SIZE, conn->target_delay / 1000,
 			CUR_DELAY_SIZE, DELAY_BASE_HISTORY);
+    #endif
 
 	// Setup initial timeout timer.
 	conn->retransmit_timeout = 3000;
@@ -3411,12 +3415,12 @@ void struct_utp_context::log(int level, utp_socket *socket, char const *fmt, ...
 	buf[len] = '\0';
 	va_end(va);
 
-	log_unchecked(socket, buf, len);
+	log_unchecked(socket, buf, len, level);
 }
 
-inline void struct_utp_context::log_unchecked(utp_socket *socket, char const *buf, size_t len)
+inline void struct_utp_context::log_unchecked(utp_socket *socket, char const *buf, size_t len, int level)
 {
-	utp_call_log(this, socket, (const byte *)buf, len);
+	utp_call_log(this, socket, (const byte *)buf, len, level);
 }
 
 inline bool struct_utp_context::would_log(int level)

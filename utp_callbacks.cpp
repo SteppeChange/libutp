@@ -23,6 +23,7 @@
  */
 
 #include "utp_callbacks.h"
+#include "utp.h"
 
 int utp_call_on_firewall(utp_context *ctx, const struct sockaddr *address, socklen_t address_len)
 {
@@ -180,7 +181,7 @@ size_t utp_call_get_read_buffer_size(utp_context *ctx, utp_socket *socket)
 	return (size_t)ctx->callbacks[UTP_GET_READ_BUFFER_SIZE](&args);
 }
 
-void utp_call_log(utp_context *ctx, utp_socket *socket, const byte *buf, size_t len)
+void utp_call_log(utp_context *ctx, utp_socket *socket, const byte *buf, size_t len, int level)
 {
 	utp_callback_arguments args;
 	if (!ctx->callbacks[UTP_LOG]) return;
@@ -189,6 +190,7 @@ void utp_call_log(utp_context *ctx, utp_socket *socket, const byte *buf, size_t 
 	args.socket = socket;
 	args.buf = buf;
 	args.len = len;
+	args.type = level;
 	ctx->callbacks[UTP_LOG](&args);
 }
 
