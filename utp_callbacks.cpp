@@ -180,7 +180,7 @@ size_t utp_call_get_read_buffer_size(utp_context *ctx, utp_socket *socket)
 	return (size_t)ctx->callbacks[UTP_GET_READ_BUFFER_SIZE](&args);
 }
 
-void utp_call_log(utp_context *ctx, utp_socket *socket, const byte *buf)
+void utp_call_log(utp_context *ctx, utp_socket *socket, const byte *buf, size_t len)
 {
 	utp_callback_arguments args;
 	if (!ctx->callbacks[UTP_LOG]) return;
@@ -188,6 +188,7 @@ void utp_call_log(utp_context *ctx, utp_socket *socket, const byte *buf)
 	args.context = ctx;
 	args.socket = socket;
 	args.buf = buf;
+	args.len = len;
 	ctx->callbacks[UTP_LOG](&args);
 }
 

@@ -154,9 +154,11 @@ enum {
 	ST_NUM_STATES,		// used for bounds checking
 };
 
+#ifdef UTP_DEBUG_LOGGING
 static const cstr flagnames[] = {
 	"ST_DATA","ST_FIN","ST_STATE","ST_RESET","ST_SYN"
 };
+#endif
 
 enum CONN_STATE {
 	CS_UNINITIALIZED = 0,
@@ -172,9 +174,11 @@ enum CONN_STATE {
 	CS_DESTROY
 };
 
+#ifdef UTP_DEBUG_LOGGING
 static const cstr statenames[] = {
 	"UNINITIALIZED", "IDLE","SYN_SENT", "SYN_RECV", "CONNECTED","CONNECTED_FULL","GOT_FIN","DESTROY_DELAY","FIN_SENT","RESET","DESTROY"
 };
+#endif
 
 struct OutgoingPacket {
 	size_t length;
@@ -555,18 +559,17 @@ struct UTPSocket {
         if (!ctx->would_log(level)) {
             return;
         }
+
+		static char buf[4096];
+		size_t len = snprintf(buf, 4096, "%p %s %06u ", this, addrfmt(addr, addrbuf), conn_id_recv);
+
 		va_list va;
-		char buf[4096], buf2[4096];
-
 		va_start(va, fmt);
-		size_t len = vsnprintf(buf, 4096, fmt, va);
+		len = vsnprintf(&buf[len], 4096, fmt, va);
 		va_end(va);
+
 		buf[len] = '\0';
-
-		len = snprintf(buf2, 4096, "%p %s %06u %s", this, addrfmt(addr, addrbuf), conn_id_recv, buf);
-		buf2[len] = '\0';
-
-		ctx->log_unchecked(this, buf2);
+		ctx->log_unchecked(this, buf, len);
 	}
 
 	void schedule_ack();
@@ -589,8 +592,7 @@ struct UTPSocket {
 	// days; the failure mode in that case is we do an extra decay
 	// or fail to do one when we really shouldn't.
 	bool can_decay_win(int64 msec) const
-	{
-                return (msec - last_rwin_decay) >= MAX_WINDOW_DECAY;
+	{return (msec - last_rwin_decay) >= MAX_WINDOW_DECAY;
 	}
 
 	// If we can, decay max window, returns true if we actually did so
@@ -3402,22 +3404,19 @@ void struct_utp_context::log(int level, utp_socket *socket, char const *fmt, ...
 	}
 
 	va_list va;
-	va_start(va, fmt);
-	log_unchecked(socket, fmt, va);
-	va_end(va);
-}
-
-void struct_utp_context::log_unchecked(utp_socket *socket, char const *fmt, ...)
-{
-	va_list va;
-	char buf[4096];
+	static char buf[4096];
 
 	va_start(va, fmt);
 	size_t len = vsnprintf(buf, 4096, fmt, va);
 	buf[len] = '\0';
 	va_end(va);
 
-	utp_call_log(this, socket, (const byte *)buf);
+	log_unchecked(socket, buf, len);
+}
+
+inline void struct_utp_context::log_unchecked(utp_socket *socket, char const *buf, size_t len)
+{
+	utp_call_log(this, socket, (const byte *)buf, len);
 }
 
 inline bool struct_utp_context::would_log(int level)
