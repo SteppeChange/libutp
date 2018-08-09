@@ -1715,7 +1715,7 @@ void UTPSocket::apply_ccontrol(size_t bytes_acked, uint32 actual_delay, int64 mi
 
 	// used in parse_log.py
 	#ifdef UTP_DEBUG_LOGGING
-	log(UTP_LOG_NORMAL, "actual_delay:%u our_delay:%d their_delay:%u off_target:%d max_window:%u "
+	log(UTP_LOG_DEBUG, "actual_delay:%u our_delay:%d their_delay:%u off_target:%d max_window:%u "
 			"delay_base:%u delay_sum:%d target_delay:%d acked_bytes:%u cur_window:%u "
 			"scaled_gain:%f rtt:%u rate:%u wnduser:%u rto:%u timeout:%d get_microseconds:" I64u " "
 			"cur_window_packets:%u packet_size:%u their_delay_base:%u their_actual_delay:%u "
@@ -2756,7 +2756,7 @@ int utp_connect(utp_socket *conn, const struct sockaddr *to, socklen_t tolen)
 
 	// used in parse_log.py
 	#ifdef UTP_DEBUG_LOGGING
-	conn->log(UTP_LOG_NORMAL, "UTP_Connect conn_seed:%u packet_size:%u (B) "
+	conn->log(UTP_LOG_DEBUG, "UTP_Connect conn_seed:%u packet_size:%u (B) "
 			"target_delay:%u (ms) delay_history:%u "
 			"delay_base_history:%u (minutes)",
 			conn->conn_seed, PACKET_SIZE, conn->target_delay / 1000,
