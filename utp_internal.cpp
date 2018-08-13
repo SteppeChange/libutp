@@ -2958,29 +2958,17 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 
 		UTPSocketKeyData* keyData = ctx->utp_sockets->Lookup(UTPSocketKey(addr, id + 1));
 		if (keyData) {
-
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "rejected incoming connection, connection already exists");
-			#endif
-
+			ctx->log(UTP_LOG_NORMAL, NULL, "rejected incoming connection, connection already exists");
 			return 1;
 		}
 
 		if (ctx->utp_sockets->GetCount() > 3000) {
-
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "rejected incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
-			#endif
-
+			ctx->log(UTP_LOG_NORMAL, NULL, "rejected incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
 			return 1;
 		}
 		// true means yes, block connection.  false means no, don't block.
 		if (utp_call_on_firewall(ctx, to, tolen)) {
-
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "rejected incoming connection, firewall callback returned true");
-			#endif
-
+			ctx->log(UTP_LOG_NORMAL, NULL, "rejected incoming connection, firewall callback returned true");
 			return 1;
 		}
 
@@ -3127,22 +3115,16 @@ int utp_process_icmp_error(utp_context *ctx, const byte *buffer, size_t len, con
 	switch(conn->state) {
 		// Don't pass on errors for idle/closed connections
 		case CS_IDLE:
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "ICMP from %s in state CS_IDLE, ignoring", addrfmt(addr, addrbuf));
-			#endif
+			ctx->log(UTP_LOG_NORMAL, NULL, "ICMP from %s in state CS_IDLE, ignoring", addrfmt(addr, addrbuf));
 			return 1;
 
 		case CS_FIN_SENT:
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "ICMP from %s in state CS_FIN_SENT, setting state to CS_DESTROY and causing error %d", addrfmt(addr, addrbuf), err);
-			#endif
+			ctx->log(UTP_LOG_NORMAL, NULL, "ICMP from %s in state CS_FIN_SENT, setting state to CS_DESTROY and causing error %d", addrfmt(addr, addrbuf), err);
 			conn->state = CS_DESTROY;
 			break;
 
 		default:
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "ICMP from %s, setting state to CS_RESET and causing error %d", addrfmt(addr, addrbuf), err);
-			#endif
+			ctx->log(UTP_LOG_NORMAL, NULL, "ICMP from %s, setting state to CS_RESET and causing error %d", addrfmt(addr, addrbuf), err);
 			conn->state = CS_RESET;
 			break;
 	}
@@ -3181,9 +3163,7 @@ ssize_t utp_writev(utp_socket *conn, struct utp_iovec *iovec_input, size_t num_i
 	#endif
 
 	if (conn->state != CS_CONNECTED) {
-		#if UTP_DEBUG_LOGGING
-		conn->log(UTP_LOG_DEBUG, "UTP_Write %u bytes = false (not CS_CONNECTED)", (uint)bytes);
-		#endif
+		conn->log(UTP_LOG_NORMAL, "UTP_Write %u bytes = false (not CS_CONNECTED)", (uint)bytes);
 		return 0;
 	}
 
