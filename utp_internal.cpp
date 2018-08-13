@@ -1824,11 +1824,7 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 	// Data pointer
 	const byte *data = (const byte*)pf1 + conn->get_header_size();
 	if (conn->get_header_size() > len) {
-
-		#if UTP_DEBUG_LOGGING
-		conn->log(UTP_LOG_DEBUG, "Invalid packet size (less than header size)");
-		#endif
-
+		conn->log(UTP_LOG_NORMAL, "Invalid packet size (less than header size)");
 		return 0;
 	}
 	// Skip the extension headers
@@ -2164,6 +2160,14 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 		// Incoming connection completion
 		if (pk_flags == ST_DATA && conn->state == CS_SYN_RECV) {
 			conn->state = CS_CONNECTED;
+
+            // fixme: added by A.D.
+            struct sockaddr to;
+            socklen_t tolen = 0;
+            const SOCKADDR_STORAGE sa = conn->addr.get_sockaddr_storage(&tolen);
+            memcpy(&to, &sa, tolen);
+            utp_call_on_accept(conn->ctx, conn, &to, tolen);
+
 		}
 
 		// Outgoing connection completion
@@ -2999,12 +3003,14 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 		#endif
 
 		conn->send_ack(true);
-
+        /*
+         * fixme: commented by A.D., because we want to send data immediately after this callback
 		utp_call_on_accept(ctx, conn, to, tolen);
 
 		// we report overhead after on_accept(), because the callbacks are setup now
 		utp_call_on_overhead_statistics(conn->ctx, conn, false, (len - read) + conn->get_udp_overhead(), header_overhead); // SYN
 		utp_call_on_overhead_statistics(conn->ctx, conn, true,  conn->get_overhead(),                    ack_overhead);    // SYNACK
+         */
 	}
 	else {
 
