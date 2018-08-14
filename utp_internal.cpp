@@ -2984,7 +2984,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 		conn->fast_resend_seq_nr = conn->seq_nr;
 		conn->state = CS_SYN_RECV;
 
-		const size_t read = utp_process_incoming(conn, buffer, len, true);
+		/*const size_t read = */utp_process_incoming(conn, buffer, len, true);
 
 		#if UTP_DEBUG_LOGGING
 		ctx->log(UTP_LOG_DEBUG, NULL, "recv send connect ACK");
