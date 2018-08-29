@@ -2161,13 +2161,10 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 		if (pk_flags == ST_DATA && conn->state == CS_SYN_RECV) {
 			conn->state = CS_CONNECTED;
 
-            // fixme: added by A.D.
-            struct sockaddr to;
-            socklen_t tolen = 0;
-            const SOCKADDR_STORAGE sa = conn->addr.get_sockaddr_storage(&tolen);
-            memcpy(&to, &sa, tolen);
-            utp_call_on_accept(conn->ctx, conn, &to, tolen);
-
+			// fixme: added by A.D.
+			socklen_t tolen = 0;
+			const SOCKADDR_STORAGE sa = conn->addr.get_sockaddr_storage(&tolen);
+			utp_call_on_accept(conn->ctx, conn, (struct sockaddr *)&sa, tolen);
 		}
 
 		// Outgoing connection completion
