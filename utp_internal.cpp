@@ -618,14 +618,16 @@ struct UTPSocket {
 	size_t get_udp_mtu()
 	{
 		socklen_t len;
-		SOCKADDR_STORAGE sa = addr.get_sockaddr_storage(&len);
+		SOCKADDR_STORAGE sa;
+        addr.get_sockaddr_storage(sa, &len);
 		return utp_call_get_udp_mtu(this->ctx, this, (const struct sockaddr *)&sa, len);
 	}
 
 	size_t get_udp_overhead()
 	{
 		socklen_t len;
-		SOCKADDR_STORAGE sa = addr.get_sockaddr_storage(&len);
+		SOCKADDR_STORAGE sa;
+        addr.get_sockaddr_storage(sa, &len);
 		return utp_call_get_udp_overhead(this->ctx, this, (const struct sockaddr *)&sa, len);
 	}
 
@@ -699,7 +701,8 @@ static void utp_register_sent_packet(utp_context *ctx, size_t length)
 void send_to_addr(utp_context *ctx, const byte *p, size_t len, const PackedSockAddr &addr, int flags = 0)
 {
 	socklen_t tolen;
-	SOCKADDR_STORAGE to = addr.get_sockaddr_storage(&tolen);
+	SOCKADDR_STORAGE to;
+    addr.get_sockaddr_storage(to, &tolen);
 	utp_register_sent_packet(ctx, len);
 	utp_call_sendto(ctx, NULL, p, len, (const struct sockaddr *)&to, tolen, flags);
 }
@@ -2162,9 +2165,10 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 			conn->state = CS_CONNECTED;
 
 			// fixme: added by A.D.
-			socklen_t tolen = 0;
-			const SOCKADDR_STORAGE sa = conn->addr.get_sockaddr_storage(&tolen);
-			utp_call_on_accept(conn->ctx, conn, (struct sockaddr *)&sa, tolen);
+			socklen_t fromlen;
+			SOCKADDR_STORAGE sa;
+            conn->addr.get_sockaddr_storage(sa, &fromlen);
+			utp_call_on_accept(conn->ctx, conn, (const struct sockaddr *)&sa, fromlen);
 		}
 
 		// Outgoing connection completion
@@ -3305,7 +3309,8 @@ int utp_getpeername(utp_socket *conn, struct sockaddr *addr, socklen_t *addrlen)
 	if (conn->state == CS_UNINITIALIZED) return -1;
 
 	socklen_t len;
-	const SOCKADDR_STORAGE sa = conn->addr.get_sockaddr_storage(&len);
+	SOCKADDR_STORAGE sa;
+    conn->addr.get_sockaddr_storage(sa, &len);
 	*addrlen = min(len, *addrlen);
 	memcpy(addr, &sa, *addrlen);
 	return 0;

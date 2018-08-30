@@ -56,7 +56,8 @@ bool PackedSockAddr::operator!=(const PackedSockAddr& rhs) const
 	return !(*this == rhs);
 }
 
-uint32 PackedSockAddr::compute_hash() const {
+uint32 PackedSockAddr::compute_hash() const
+{
 	return utp_hash_mem(&_in, sizeof(_in)) ^ _port;
 }
 
@@ -73,7 +74,7 @@ void PackedSockAddr::set(const SOCKADDR_STORAGE* sa, socklen_t len)
 		_sin6w[5] = 0xffff;
 		_sin4 = sin->sin_addr.s_addr;
 		_port = ntohs(sin->sin_port);
-	} else {
+	} else if (sa->ss_family == AF_INET6) {
 		assert(len >= sizeof(sockaddr_in6));
 		const sockaddr_in6 *sin6 = (sockaddr_in6*)sa;
 		_in._in6addr = sin6->sin6_addr;
@@ -95,9 +96,8 @@ PackedSockAddr::PackedSockAddr(void)
 	set(&sa, len);
 }
 
-SOCKADDR_STORAGE PackedSockAddr::get_sockaddr_storage(socklen_t *len = NULL) const
+void PackedSockAddr::get_sockaddr_storage(SOCKADDR_STORAGE &sa, socklen_t *len = NULL) const
 {
-	SOCKADDR_STORAGE sa;
 	const byte family = get_family();
 	if (family == AF_INET) {
 		sockaddr_in *sin = (sockaddr_in*)&sa;
@@ -114,7 +114,6 @@ SOCKADDR_STORAGE PackedSockAddr::get_sockaddr_storage(socklen_t *len = NULL) con
 		sin6->sin6_addr = _in._in6addr;
 		sin6->sin6_port = htons(_port);
 	}
-	return sa;
 }
 
 // #define addrfmt(x, s) x.fmt(s, sizeof(s))

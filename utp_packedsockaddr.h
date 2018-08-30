@@ -51,7 +51,7 @@ struct PACKED_ATTRIBUTE PackedSockAddr {
 	PackedSockAddr(const SOCKADDR_STORAGE* sa, socklen_t len);
 	PackedSockAddr(void);
 
-	SOCKADDR_STORAGE get_sockaddr_storage(socklen_t *len) const;
+	void get_sockaddr_storage(SOCKADDR_STORAGE &sa, socklen_t *len) const;
 	cstr fmt(str s, size_t len) const;
 
 	uint32 compute_hash() const;
