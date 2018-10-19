@@ -123,13 +123,15 @@ cstr PackedSockAddr::fmt(str s, size_t len) const
 	const byte family = get_family();
 	str i;
 	if (family == AF_INET) {
-		INET_NTOP(family, (uint32*)&_sin4, s, len);
+		const char *res = INET_NTOP(family, (uint32*)&_sin4, s, len);
+        if(res==0) return "INADDR_NONE";
 		i = s;
 		while (*++i) {}
 	} else {
 		i = s;
 		*i++ = '[';
-		INET_NTOP(family, (in6_addr*)&_in._in6addr, i, len-1);
+		const char *res = INET_NTOP(family, (in6_addr*)&_in._in6addr, i, len-2);
+        if(res==0) return "INADDR_NONE";
 		while (*++i) {}
 		*i++ = ']';
 	}
