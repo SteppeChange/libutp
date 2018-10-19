@@ -856,6 +856,9 @@ void UTPSocket::send_rst(utp_context *ctx,
 	pf1.windowsize = 0;
 	len = sizeof(PacketFormatV1);
 
+    ctx->log(UTP_LOG_NORMAL, NULL, "sending RST to %s (id:%u, ack_nr:%u, seq_nr:%u)",
+        addrfmt(addr, addrbuf), conn_id_send, ack_nr, seq_nr);
+
 //	LOG_DEBUG("%s: Sending RST id:%u seq_nr:%u ack_nr:%u", addrfmt(addr, addrbuf), conn_id_send, seq_nr, ack_nr);
 //	LOG_DEBUG("send %s len:%u id:%u", addrfmt(addr, addrbuf), (uint)len, conn_id_send);
 	send_to_addr(ctx, (const byte*)&pf1, len, addr);
@@ -1186,7 +1189,7 @@ void UTPSocket::check_timeouts()
 			}
 
 			// We initiated the connection but the other side failed to respond before the rto
-			if (retransmit_count >= 4 || (state == CS_SYN_SENT && retransmit_count >= 2)) {
+			if (retransmit_count >= 2) {//if (retransmit_count >= 4 || (state == CS_SYN_SENT && retransmit_count >= 2)) {
 				// 4 consecutive transmissions have timed out. Kill it. If we
 				// haven't even connected yet, give up after only 2 consecutive
 				// failed transmissions.
@@ -2332,6 +2335,7 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 	// Is this a finalize packet?
 	if (pk_flags == ST_FIN && !conn->got_fin) {
 
+        conn->log(UTP_LOG_NORMAL, "receive FIN from %s", addrfmt(conn->addr, addrbuf));
 		#if UTP_DEBUG_LOGGING
 		conn->log(UTP_LOG_DEBUG, "Got FIN eof_pkt:%u", pk_seq_nr);
 		#endif
@@ -2370,7 +2374,6 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 				if (conn->state != CS_FIN_SENT) {
 					conn->state = CS_GOT_FIN;
 					conn->rto_timeout = conn->ctx->current_ms + min<uint>(conn->rto * 3, 60);
-
 
 					#if UTP_DEBUG_LOGGING
 					conn->log(UTP_LOG_DEBUG, "Posting EOF");
@@ -2510,6 +2513,8 @@ UTPSocket::~UTPSocket()
 	UTPSocketKeyData* kd = ctx->utp_sockets->Delete(UTPSocketKey(addr, conn_id_recv));
 	assert(kd);
 
+    log(UTP_LOG_NORMAL, "connection %s is deleted (id_recv:%u, id_send:%u)", addrfmt(addr, addrbuf), conn_id_recv, conn_id_send);
+
 	// remove the socket from ack_sockets if it was there also
 	removeSocketFromAckList(this);
 
@@ -2579,7 +2584,8 @@ void utp_initialize_socket(	utp_socket *conn,
 	// we need to fit one packet in the window when we start the connection
 	conn->max_window = conn->get_packet_size();
 
-	#if UTP_DEBUG_LOGGING
+    conn->log(UTP_LOG_NORMAL, "connection %s is created (id_recv:%u, id_send:%u)", addrfmt(conn->addr, addrbuf), conn->conn_id_recv, conn->conn_id_send);
+    #if UTP_DEBUG_LOGGING
 	conn->log(UTP_LOG_DEBUG, "UTP socket initialized");
 	#endif
 }
@@ -2769,7 +2775,7 @@ int utp_connect(utp_socket *conn, const struct sockaddr *to, socklen_t tolen)
     #endif
 
 	// Setup initial timeout timer.
-	conn->retransmit_timeout = 3000;
+	conn->retransmit_timeout = 1000;
 	conn->rto_timeout = conn->ctx->current_ms + conn->retransmit_timeout;
 	conn->last_rcv_win = conn->get_rcv_window();
 
@@ -2796,6 +2802,7 @@ int utp_connect(utp_socket *conn, const struct sockaddr *to, socklen_t tolen)
 	pkt->length = header_size;
 	pkt->payload = 0;
 
+    conn->log(UTP_LOG_NORMAL, "sending SYN to %s (seq_nr:%u)", addrfmt(conn->addr, addrbuf), conn->seq_nr);
 	#if UTP_DEBUG_LOGGING
 	conn->log(UTP_LOG_DEBUG, "Sending connect %s", addrfmt(conn->addr, addrbuf));
 	#endif
@@ -2848,8 +2855,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 	}
 
 	#if UTP_DEBUG_LOGGING
-	ctx->log(UTP_LOG_DEBUG, NULL, "recv %s len:%u id:%u", addrfmt(addr, addrbuf), (uint)len, id);
-	ctx->log(UTP_LOG_DEBUG, NULL, "recv id:%u seq_nr:%u ack_nr:%u", id, (uint)pf1->seq_nr, (uint)pf1->ack_nr);
+	ctx->log(UTP_LOG_DEBUG, NULL, "recv from %s len:%u id:%u seq_nr:%u ack_nr:%u", addrfmt(addr, addrbuf), (uint)len, id, (uint)pf1->seq_nr, (uint)pf1->ack_nr);
 	#endif
 
 	const byte flags = pf1->type();
@@ -2867,9 +2873,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 		{
 			UTPSocket* conn = keyData->socket;
 
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "recv RST for existing connection");
-			#endif
+			ctx->log(UTP_LOG_NORMAL, conn, "receive RST from %s", addrfmt(addr, addrbuf));
 
 			if (conn->state == CS_FIN_SENT)
 				conn->state = CS_DESTROY;
@@ -2881,9 +2885,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 			utp_call_on_error(conn->ctx, conn, err);
 		}
 		else {
-			#if UTP_DEBUG_LOGGING
-			ctx->log(UTP_LOG_DEBUG, NULL, "recv RST for unknown connection");
-			#endif
+            ctx->log(UTP_LOG_NORMAL, NULL, "receive RST for unknown connection id:%u", id);
 		}
 		return 1;
 	}
@@ -2901,7 +2903,6 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 		}
 
 		if (conn) {
-
 			#if UTP_DEBUG_LOGGING
 			ctx->log(UTP_LOG_DEBUG, NULL, "recv processing");
 			#endif
@@ -2956,30 +2957,35 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 	}
 
 	if (ctx->callbacks[UTP_ON_ACCEPT]) {
-
-		#if UTP_DEBUG_LOGGING
-		ctx->log(UTP_LOG_DEBUG, NULL, "Incoming connection from %s", addrfmt(addr, addrbuf));
-		#endif
+        ctx->log(UTP_LOG_NORMAL, NULL, "incoming connection from %s (id:%u, seq_nr:%u)", addrfmt(addr, addrbuf), id, seq_nr);
 
 		UTPSocketKeyData* keyData = ctx->utp_sockets->Lookup(UTPSocketKey(addr, id + 1));
 		if (keyData) {
-			ctx->log(UTP_LOG_NORMAL, NULL, "rejected incoming connection, connection already exists");
+			//ctx->log(UTP_LOG_NORMAL, NULL, "reject incoming connection, connection %u already exists", id + 1);
+
+            //fix by A.D.: re-send ACK on received SYN
+            UTPSocket *conn = keyData->socket;
+            ctx->log(UTP_LOG_NORMAL, conn, "sending ACK to %s (ack_nr:%u, seq_nr:%u)", addrfmt(conn->addr, addrbuf), conn->ack_nr, conn->seq_nr);
+            conn->send_ack(true);
+
 			return 1;
 		}
 
 		if (ctx->utp_sockets->GetCount() > 3000) {
-			ctx->log(UTP_LOG_NORMAL, NULL, "rejected incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
+			ctx->log(UTP_LOG_NORMAL, NULL, "reject incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
 			return 1;
 		}
-		// true means yes, block connection.  false means no, don't block.
+		// true means yes, block connection. false means no, don't block.
 		if (utp_call_on_firewall(ctx, to, tolen)) {
-			ctx->log(UTP_LOG_NORMAL, NULL, "rejected incoming connection, firewall callback returned true");
+			ctx->log(UTP_LOG_NORMAL, NULL, "reject incoming connection, firewall callback return true");
 			return 1;
 		}
 
 		// Create a new UTP socket to handle this new connection
 		UTPSocket *conn = utp_create_socket(ctx);
+
 		utp_initialize_socket(conn, to, tolen, false, id, id+1, id);
+
 		conn->ack_nr = seq_nr;
 		conn->seq_nr = utp_call_get_random(ctx, NULL);
 		conn->fast_resend_seq_nr = conn->seq_nr;
@@ -2987,9 +2993,8 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 
 		/*const size_t read = */utp_process_incoming(conn, buffer, len, true);
 
-		#if UTP_DEBUG_LOGGING
-		ctx->log(UTP_LOG_DEBUG, NULL, "recv send connect ACK");
-		#endif
+        ctx->log(UTP_LOG_NORMAL, conn, "sending connect ACK to %s (ack_nr:%u, seq_nr:%u)",
+            addrfmt(conn->addr, addrbuf), conn->ack_nr, conn->seq_nr);
 
 		conn->send_ack(true);
         /*
@@ -3004,7 +3009,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 	else {
 
 		#if UTP_DEBUG_LOGGING
-		ctx->log(UTP_LOG_DEBUG, NULL, "rejected incoming connection, UTP_ON_ACCEPT callback not set");
+		ctx->log(UTP_LOG_NORMAL, NULL, "reject incoming connection, UTP_ON_ACCEPT callback not set");
 		#endif
 
 	}
@@ -3355,6 +3360,7 @@ void utp_close(UTPSocket *conn)
 	switch(conn->state) {
 	case CS_CONNECTED:
 	case CS_CONNECTED_FULL:
+        conn->log(UTP_LOG_NORMAL, "sending FIN to %s", addrfmt(conn->addr, addrbuf));
 		conn->state = CS_FIN_SENT;
 		conn->write_outgoing_packet(0, ST_FIN, NULL, 0);
 		break;
