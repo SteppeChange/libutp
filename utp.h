@@ -174,6 +174,7 @@ int				utp_get_delays					(utp_socket *s, uint32 *ours, uint32 *theirs, uint32 *
 utp_socket_stats* utp_get_stats					(utp_socket *s);
 utp_context*	utp_get_context					(utp_socket *s);
 void			utp_close						(utp_socket *s);
+void			utp_shutdown					(utp_socket *s);
 
 #ifdef __cplusplus
 }

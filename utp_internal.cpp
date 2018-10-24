@@ -3356,7 +3356,7 @@ void utp_close(UTPSocket *conn)
            && conn->state != CS_DESTROY_DELAY
            && conn->state != CS_FIN_SENT
            && conn->state != CS_DESTROY);
-    
+
 	switch(conn->state) {
 	case CS_CONNECTED:
 	case CS_CONNECTED_FULL:
@@ -3377,6 +3377,21 @@ void utp_close(UTPSocket *conn)
 		conn->state = CS_DESTROY;
 		break;
 	}
+}
+
+// Emergency close the UTP socket.
+void utp_shutdown(UTPSocket *conn)
+{
+    assert(conn);
+    if (!conn) return;
+
+#if UTP_DEBUG_LOGGING
+    conn->log(UTP_LOG_DEBUG, "UTP_Shutdown in state:%s", statenames[conn->state]);
+#endif
+
+    conn->state = CS_DESTROY;
+    conn->log(UTP_LOG_NORMAL, "mark connection %s to destroy(id_recv:%u, id_send:%u)",
+              addrfmt(conn->addr, addrbuf), conn->conn_id_recv, conn->conn_id_send);
 }
 
 utp_context* utp_get_context(utp_socket *socket) {
