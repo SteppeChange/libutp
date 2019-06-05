@@ -2782,6 +2782,7 @@ int utp_connect(utp_socket *conn, const struct sockaddr *to, socklen_t tolen)
 	// if you need compatibiltiy with 1.8.1, use this. it increases attackability though.
 	//conn->seq_nr = 1;
 	conn->seq_nr = utp_call_get_random(conn->ctx, conn);
+    conn->fast_resend_seq_nr = conn->seq_nr;
 
 	// Create the connect packet.
 	const size_t header_size = sizeof(PacketFormatV1);
