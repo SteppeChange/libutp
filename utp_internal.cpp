@@ -976,11 +976,9 @@ bool UTPSocket::flush_packets()
 		// Nagle check
 		// don't send the last packet if we have one packet in-flight
 		// and the current packet is still smaller than packet_size.
-//		if (i != ((seq_nr - 1) & ACK_NR_MASK) ||
-//			cur_window_packets == 1 ||
-//			pkt->payload >= packet_size) {
+        // fixme: commented by A.G. because our transfer model do not need into Nagle's algorithm
+//		if (i != ((seq_nr - 1) & ACK_NR_MASK) || cur_window_packets == 1 || pkt->payload >= packet_size)
 			send_packet(pkt);
-//		}
 	}
 	return false;
 }
