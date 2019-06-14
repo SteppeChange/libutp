@@ -1238,7 +1238,7 @@ void UTPSocket::check_timeouts()
 			if (cur_window_packets > 0) {
 				retransmit_count++;
 				// used in parse_log.py
-				log(UTP_LOG_NORMAL, "Packet timeout. Resend. seq_nr:%u. timeout:%u "
+				log(UTP_LOG_WARNING, "Packet timeout. Resend. seq_nr:%u. timeout:%u "
 					"max_window:%u cur_window_packets:%d"
 					, seq_nr - cur_window_packets, retransmit_timeout
 					, (uint)max_window, int(cur_window_packets));
@@ -1527,7 +1527,7 @@ void UTPSocket::selective_ack(uint base, const byte *mask, byte len)
 			#if UTP_DEBUG_LOGGING
 			log(UTP_LOG_DEBUG, "skipping %u. pkt:%08x transmissions:%u %s",
 				v, pkt, pkt?pkt->transmissions:0, pkt?"(not sent yet?)":"(already acked?)");
-			#endif
+            #endif
 			continue;
 		}
 
@@ -1553,15 +1553,15 @@ void UTPSocket::selective_ack(uint base, const byte *mask, byte len)
 			}
 			resends[nr++] = v;
 
-			#if UTP_DEBUG_LOGGING
-			log(UTP_LOG_DEBUG, "no ack for %u", v);
-			#endif
+			//#if UTP_DEBUG_LOGGING
+			log(UTP_LOG_WARNING, "no ack for %u", v);
+			//#endif
 
 		} else {
-			#if UTP_DEBUG_LOGGING
-			log(UTP_LOG_DEBUG, "not resending %u count:%d dup_ack:%u fast_resend_seq_nr:%u",
+			//#if UTP_DEBUG_LOGGING
+			log(UTP_LOG_WARNING, "not resending %u count:%d dup_ack:%u fast_resend_seq_nr:%u",
 				v, count, duplicate_ack, fast_resend_seq_nr);
-			#endif
+			//#endif
 		}
 	} while (--bits >= -1);
 
@@ -1572,15 +1572,15 @@ void UTPSocket::selective_ack(uint base, const byte *mask, byte len)
 		// is base-1
 		resends[nr++] = (base - 1) & ACK_NR_MASK;
 
-		#if UTP_DEBUG_LOGGING
-		log(UTP_LOG_DEBUG, "no ack for %u", (base - 1) & ACK_NR_MASK);
-		#endif
+		//#if UTP_DEBUG_LOGGING
+		log(UTP_LOG_WARNING, "no ack for %u", (base - 1) & ACK_NR_MASK);
+		//#endif
 
 	} else {
-		#if UTP_DEBUG_LOGGING
-		log(UTP_LOG_DEBUG, "not resending %u count:%d dup_ack:%u fast_resend_seq_nr:%u",
+		//#if UTP_DEBUG_LOGGING
+		log(UTP_LOG_WARNING, "not resending %u count:%d dup_ack:%u fast_resend_seq_nr:%u",
 			base - 1, count, duplicate_ack, fast_resend_seq_nr);
-		#endif
+		//#endif
 	}
 
 	bool back_off = false;
@@ -1598,7 +1598,7 @@ void UTPSocket::selective_ack(uint base, const byte *mask, byte len)
 		if (!pkt) continue;
 
 		// used in parse_log.py
-		log(UTP_LOG_NORMAL, "Packet %u lost. Resending", v);
+		log(UTP_LOG_WARNING, "Packet %u lost. Resending", v);
 
 		// On Loss
 		back_off = true;
@@ -1828,7 +1828,7 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 	// Data pointer
 	const byte *data = (const byte*)pf1 + conn->get_header_size();
 	if (conn->get_header_size() > len) {
-		conn->log(UTP_LOG_NORMAL, "Invalid packet size (less than header size)");
+		conn->log(UTP_LOG_WARNING, "Invalid packet size (less than header size)");
 		return 0;
 	}
 	// Skip the extension headers
@@ -2279,9 +2279,9 @@ size_t utp_process_incoming(UTPSocket *conn, const byte *packet, size_t len, boo
 				OutgoingPacket *pkt = (OutgoingPacket*)conn->outbuf.get(conn->seq_nr - conn->cur_window_packets);
 				if (pkt && pkt->transmissions > 0) {
 
-					#if UTP_DEBUG_LOGGING
-					conn->log(UTP_LOG_DEBUG, "Packet %u fast timeout-retry.", conn->seq_nr - conn->cur_window_packets);
-					#endif
+					//#if UTP_DEBUG_LOGGING
+					conn->log(UTP_LOG_WARNING, "Packet %u fast timeout-retry", conn->seq_nr - conn->cur_window_packets);
+					//#endif
 
 					#ifdef _DEBUG
 					++conn->_stats.fastrexmit;
@@ -2655,7 +2655,11 @@ int utp_context_set_option(utp_context *ctx, int opt, int val)
 	if (!ctx) return -1;
 
 	switch (opt) {
-    	case UTP_LOG_NORMAL:
+        case UTP_LOG_WARNING:
+            ctx->log_warning = val ? true : false;
+            return 0;
+
+        case UTP_LOG_NORMAL:
 			ctx->log_normal = val ? true : false;
 			return 0;
 
@@ -2690,6 +2694,7 @@ int utp_context_get_option(utp_context *ctx, int opt)
 	if (!ctx) return -1;
 
 	switch (opt) {
+        case UTP_LOG_WARNING:	return ctx->log_warning ? 1 : 0;
     	case UTP_LOG_NORMAL:	return ctx->log_normal ? 1 : 0;
     	case UTP_LOG_MTU:		return ctx->log_mtu    ? 1 : 0;
     	case UTP_LOG_DEBUG:		return ctx->log_debug  ? 1 : 0;
@@ -2971,7 +2976,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 		}
 
 		if (ctx->utp_sockets->GetCount() > 3000) {
-			ctx->log(UTP_LOG_NORMAL, NULL, "reject incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
+			ctx->log(UTP_LOG_WARNING, NULL, "reject incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
 			return 1;
 		}
 		// true means yes, block connection. false means no, don't block.
@@ -3130,12 +3135,12 @@ int utp_process_icmp_error(utp_context *ctx, const byte *buffer, size_t len, con
 			return 1;
 
 		case CS_FIN_SENT:
-			ctx->log(UTP_LOG_NORMAL, NULL, "ICMP from %s in state CS_FIN_SENT, setting state to CS_DESTROY and causing error %d", addrfmt(addr, addrbuf), err);
+			ctx->log(UTP_LOG_WARNING, NULL, "ICMP from %s in state CS_FIN_SENT, setting state to CS_DESTROY and causing error %d", addrfmt(addr, addrbuf), err);
 			conn->state = CS_DESTROY;
 			break;
 
 		default:
-			ctx->log(UTP_LOG_NORMAL, NULL, "ICMP from %s, setting state to CS_RESET and causing error %d", addrfmt(addr, addrbuf), err);
+			ctx->log(UTP_LOG_WARNING, NULL, "ICMP from %s, setting state to CS_RESET and causing error %d", addrfmt(addr, addrbuf), err);
 			conn->state = CS_RESET;
 			break;
 	}
@@ -3174,7 +3179,7 @@ ssize_t utp_writev(utp_socket *conn, struct utp_iovec *iovec_input, size_t num_i
 	#endif
 
 	if (conn->state != CS_CONNECTED) {
-		conn->log(UTP_LOG_NORMAL, "UTP_Write %u bytes = false (not CS_CONNECTED)", (uint)bytes);
+		conn->log(UTP_LOG_WARNING, "UTP_Write %u bytes = false (not CS_CONNECTED)", (uint)bytes);
 		return 0;
 	}
 
@@ -3433,6 +3438,7 @@ inline void struct_utp_context::log_unchecked(utp_socket *socket, char const *bu
 
 inline bool struct_utp_context::would_log(int level)
 {
+    if (level == UTP_LOG_WARNING) return log_warning;
 	if (level == UTP_LOG_NORMAL) return log_normal;
 	if (level == UTP_LOG_MTU) return log_mtu;
 	if (level == UTP_LOG_DEBUG) return log_debug;

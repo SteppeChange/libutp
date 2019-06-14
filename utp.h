@@ -85,6 +85,7 @@ enum {
 
 	// context and socket options that may be set/queried
     UTP_LOG_NORMAL,
+    UTP_LOG_WARNING,
     UTP_LOG_MTU,
     UTP_LOG_DEBUG,
 	UTP_SNDBUF,

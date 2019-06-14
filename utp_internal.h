@@ -133,6 +133,7 @@ struct struct_utp_context {
 	void log_unchecked(utp_socket *socket, char const *buf, size_t len, int level);
 	bool would_log(int level);
 
+    bool log_warning:1;	// log warning events?
 	bool log_normal:1;	// log normal events?
 	bool log_mtu:1;		// log MTU related events?
 	bool log_debug:1;	// log debugging events? (Must also compile with UTP_DEBUG_LOGGING defined)
