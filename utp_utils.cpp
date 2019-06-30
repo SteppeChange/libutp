@@ -208,26 +208,24 @@ static inline uint64 UTP_GetMicroseconds()
 	return now;
 }
 
-#define ETHERNET_MTU 1500
+
+// Mobile network As defined in Verizon LTE 3GPP BAND 13 NETWORK ACCESS document, device shall set the MTU size to 1428 bytes for all PDN connections.
+#define LTE_MTU 1428
 #define IPV4_HEADER_SIZE 20
 #define IPV6_HEADER_SIZE 40
 #define UDP_HEADER_SIZE 8
-#define GRE_HEADER_SIZE 24
-#define PPPOE_HEADER_SIZE 8
-#define MPPE_HEADER_SIZE 2
-// packets have been observed in the wild that were fragmented
-// with a payload of 1416 for the first fragment
-// There are reports of routers that have MTU sizes as small as 1392
-#define FUDGE_HEADER_SIZE 36
+#define GRE_HEADER_SIZE 24 // for Tunneling
+#define PPPOE_HEADER_SIZE 8 // for mobile network link
+#define MPPE_HEADER_SIZE 2 // PPPOE encryption (Microsoft Point-to-Point Encryption (MPPE) )
+#define LIBANT_MULTIPLEXING	4
 #define TEREDO_MTU 1280
 
 #define UDP_IPV4_OVERHEAD (IPV4_HEADER_SIZE + UDP_HEADER_SIZE)
 #define UDP_IPV6_OVERHEAD (IPV6_HEADER_SIZE + UDP_HEADER_SIZE)
 #define UDP_TEREDO_OVERHEAD (UDP_IPV4_OVERHEAD + UDP_IPV6_OVERHEAD)
 
-#define UDP_IPV4_MTU (ETHERNET_MTU - IPV4_HEADER_SIZE - UDP_HEADER_SIZE - GRE_HEADER_SIZE - PPPOE_HEADER_SIZE - MPPE_HEADER_SIZE - FUDGE_HEADER_SIZE)
-#define UDP_IPV6_MTU (ETHERNET_MTU - IPV6_HEADER_SIZE - UDP_HEADER_SIZE - GRE_HEADER_SIZE - PPPOE_HEADER_SIZE - MPPE_HEADER_SIZE - FUDGE_HEADER_SIZE)
-#define UDP_TEREDO_MTU (TEREDO_MTU - IPV6_HEADER_SIZE - UDP_HEADER_SIZE)
+#define UDP_IPV4_MTU (LTE_MTU - IPV4_HEADER_SIZE - UDP_HEADER_SIZE - GRE_HEADER_SIZE - PPPOE_HEADER_SIZE - MPPE_HEADER_SIZE - LIBANT_MULTIPLEXING)
+#define UDP_TEREDO_MTU (TEREDO_MTU - IPV6_HEADER_SIZE - UDP_HEADER_SIZE - LIBANT_MULTIPLEXING)
 
 uint64 utp_default_get_udp_mtu(utp_callback_arguments *args) {
 	// Since we don't know the local address of the interface,
