@@ -2975,7 +2975,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 			return 1;
 		}
 
-		if (ctx->utp_sockets->GetCount() > 3000) {
+		if (ctx->utp_sockets->GetCount() > 1000) {
 			ctx->log(UTP_LOG_WARNING, NULL, "reject incoming connection, too many uTP sockets %d", ctx->utp_sockets->GetCount());
 			return 1;
 		}
@@ -3296,7 +3296,7 @@ void utp_check_timeouts(utp_context *ctx)
 		conn->check_timeouts();
 
 		// Check if the object was deleted
-		if (conn->state == CS_DESTROY) {
+		if (conn->state == CS_DESTROY || conn->state == CS_RESET) {
 			#if UTP_DEBUG_LOGGING
 			conn->log(UTP_LOG_DEBUG, "Destroying");
 			#endif
