@@ -2981,7 +2981,9 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 		}
 		// true means yes, block connection. false means no, don't block.
 		if (utp_call_on_firewall(ctx, to, tolen)) {
+            #if UTP_DEBUG_LOGGING
 			ctx->log(UTP_LOG_NORMAL, NULL, "reject incoming connection, firewall callback return true");
+            #endif
 			return 1;
 		}
 
